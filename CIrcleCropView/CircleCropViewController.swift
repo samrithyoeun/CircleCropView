@@ -10,19 +10,18 @@ import UIKit
 
 public class CropViewController: UIViewController {
 
-    var image: UIImage
-    let imageView: UIImageView
-    let scrollView: UIScrollView
-    let completion: (UIImage?) -> Void
+    var image = UIImage()
+    var imageView = UIImageView()
+    var scrollView = UIScrollView()
+    var completion: ((UIImage?) -> Void)? = nil
     private var circleView: CircleCropView?
 
 
     var backButton: UIButton = {
         let button = UIButton()
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.setTitle("Back", for: .normal)
-        button.backgroundColor = UIColor.black.withAlphaComponent(0.8)
-        button.setTitleColor(.white, for: .normal)
+        button.setTitle("Cancel", for: .normal)
+        button.setTitleColor(.yellow, for: .normal)
         button.addTarget(self, action: #selector(backClick), for: .touchUpInside)
         button.layer.cornerRadius = 8
         return button
@@ -30,21 +29,21 @@ public class CropViewController: UIViewController {
 
     var okButton: UIButton = {
         let button = UIButton(frame: CGRect(x: 0, y: 0, width: 200, height: 200))
-        button.setTitle("Crop Image", for: .normal)
-        button.backgroundColor = UIColor.black.withAlphaComponent(0.8)
-        button.setTitleColor(.white, for: .normal)
+        button.setTitle("Use this photo", for: .normal)
+        button.backgroundColor = UIColor.yellow.withAlphaComponent(0.8)
+        button.setTitleColor(.black, for: .normal)
         button.addTarget(self, action: #selector(okClick), for: .touchUpInside)
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.layer.cornerRadius = 20
+        button.layer.cornerRadius = 25
         return button
     }()
 
     var titleLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 18, weight: UIFont.Weight(rawValue: 10))
-        label.text = "PROFILE PICTURE"
-        label.textColor = UIColor.white
-        label.backgroundColor  = UIColor.black
+        label.font = UIFont.boldSystemFont(ofSize: 18)
+        label.text = "Move and Scale"
+        label.textColor = UIColor.yellow
+        label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -56,14 +55,27 @@ public class CropViewController: UIViewController {
         scrollView = UIScrollView()
         super.init(nibName: nil, bundle: nil)
     }
-
+    
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+    }
+    
+    func setup(_ image: UIImage, completion:  @escaping (UIImage?) -> Void)  {
+        self.image = image
+        self.completion = completion
+        imageView = UIImageView(image: image)
+        scrollView = UIScrollView()
+    }
+    
     override public func viewDidLoad() {
         super.viewDidLoad()
         circleView = CircleCropView(frame: self.view.bounds)
         view.addSubview(scrollView)
         view.addSubview(circleView!)
         view.addSubview(okButton)
+        view.addSubview(titleLabel)
         view.addSubview(backButton)
+        
         scrollView.addSubview(imageView)
         scrollView.contentSize = image.size
         scrollView.delegate = self
@@ -72,28 +84,35 @@ public class CropViewController: UIViewController {
         circleView?.frame = self.scrollView.frame.inset(by: view.safeAreaInsets)
         addConstraint()
     }
-
+    
     func addConstraint() {
-
-             NSLayoutConstraint.activate([
-                okButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -46),
-                 okButton.heightAnchor.constraint(equalToConstant: 51),
-                 okButton.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 34),
-                 okButton.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: -34)
-                 ])
-
-            NSLayoutConstraint.activate([
-                backButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 48),
-                backButton.widthAnchor.constraint(equalToConstant: 100),
-                backButton.heightAnchor.constraint(equalToConstant: 40),
-                backButton.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 30)
-            ])
+        
+        NSLayoutConstraint.activate([
+            okButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -15),
+            okButton.heightAnchor.constraint(equalToConstant: 50),
+            okButton.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 15),
+            okButton.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: -15)
+        ])
+        
+        
+        NSLayoutConstraint.activate([
+            backButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 30),
+            backButton.heightAnchor.constraint(equalToConstant: 40),
+            backButton.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: -20)
+        ])
+   
+        NSLayoutConstraint.activate([
+            titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 30),
+            titleLabel.heightAnchor.constraint(equalToConstant: 40),
+            titleLabel.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 0),
+            titleLabel.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: 0)
+        ])
     }
-
+    
     override public var preferredStatusBarStyle: UIStatusBarStyle {
         return .default
     }
-
+    
     override public func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(true, animated: animated)
@@ -120,10 +139,6 @@ public class CropViewController: UIViewController {
         navigationController?.setNavigationBarHidden(false, animated: animated)
     }
 
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
     @objc func backClick(sender: UIButton) {
         self.dismiss(animated: true, completion: nil)
     }
@@ -137,7 +152,7 @@ public class CropViewController: UIViewController {
                let shift = rect.applying(CGAffineTransform(translationX: self.scrollView.contentOffset.x, y: self.scrollView.contentOffset.y))
                let scaled = shift.applying(CGAffineTransform(scaleX: 1.0 / self.scrollView.zoomScale, y: 1.0 / self.scrollView.zoomScale))
                let newImage = self.image.imageCropped(toRect: scaled)
-               self.completion(newImage)
+               self.completion?(newImage)
             self.dismiss(animated: true, completion: nil)
         }
 }

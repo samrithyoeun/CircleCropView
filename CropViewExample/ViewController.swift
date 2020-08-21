@@ -32,10 +32,11 @@ class ViewController: UIViewController {
     }
 
     private func presentCropViewController(with Image: UIImage) {
-        let cropViewController = CropViewController(image: Image) { [unowned self] croppedImage in
+        let controller = CropViewController(image: Image) { [unowned self] croppedImage in
             self.imageView.image = croppedImage
         }
-        self.present(cropViewController, animated: true, completion: nil)
+        controller.modalPresentationStyle = .fullScreen
+        self.present(controller, animated: true, completion: nil)
     }
 
     /// function responsible for open ImagePicker with selected action for camera state
